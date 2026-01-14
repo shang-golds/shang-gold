@@ -1,16 +1,28 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// إنشاء Supabase Client باستخدام Service Role
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+/*
+====================================
+POST: Investor Login
+Body:
+{
+  investor_number: number,
+  pin: string
+}
+====================================
+*/
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { investor_number, pin } = body;
 
+    // التحقق من المدخلات
     if (!investor_number || !pin) {
       return NextResponse.json(
         { error: "investor_number and pin are required" },
@@ -18,6 +30,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // البحث عن المستثمر
     const { data: investor, error } = await supabase
       .from("investors")
       .select("id, full_name, investor_number")
@@ -32,7 +45,8 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({
+    // إنشاء Response
+    const response = NextResponse.json({
       success: true,
       investor: {
         id: investor.id,
@@ -40,10 +54,18 @@ export async function POST(req: Request) {
         investor_number: investor.investor_number,
       },
     });
-  } catch {
+
+    // إنشاء Cookie (جلسة تسجيل دخول)
+    response.cookies.set("investor_id", investor.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 أيام
+    });
+
+    return response;
+  } catch (err) {
     return NextResponse.json(
       { error: "Invalid request body" },
       { status: 400 }
-    );
-  }
-}
