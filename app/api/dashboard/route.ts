@@ -7,10 +7,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// ⚡ سعر الذهب من XAUT (Tether Gold) — مجاني
+// ⚡ Gold price from XAUT (Tether Gold) — free
 async function fetchGoldPrice18K() {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 3000); // ⏱️ 3 ثواني
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
     const res = await fetch(
@@ -22,22 +22,16 @@ async function fetchGoldPrice18K() {
     );
 
     clearTimeout(timeoutId);
-
     if (!res.ok) return null;
 
     const data = await res.json();
-
-    // سعر أونصة الذهب (24K) من XAUT
     const pricePerOunce = data?.["tether-gold"]?.usd;
     if (!pricePerOunce) return null;
 
-    // أونصة → غرام (24K)
     const pricePerGram24k = pricePerOunce / 31.1035;
-
-    // 18K = 75%
-    return Number((pricePerGram24k * 0.75).toFixed(2));
+    return Number((pricePerGram24k * 0.75).toFixed(2)); // 18K
   } catch {
-    return null; // ❌ لا نعلّق الصفحة
+    return null;
   }
 }
 
@@ -49,47 +43,51 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Investor
-  const { data: investor } = await supabase
+  // 👤 Investor info
+  const { data: investor, error: investorError } = await supabase
     .from("investors")
     .select("id, full_name, investor_number")
     .eq("id", investorId)
     .single();
 
-  // Investments
-  const { data: investments } = await supabase
-    .from("investments")
-    .select("gold_grams")
-    .eq("investor_id", investorId);
+  if (investorError || !investor) {
+    return NextResponse.json({ error: "Investor not found" }, { status: 404 });
+  }
 
-  const investmentGrams =
-    investments?.reduce((sum, row) => sum + Number(row.gold_grams), 0) || 0;
+  // 💰 Balance (FROM VIEW — source of truth)
+  const { data: balance, error: balanceError } = await supabase
+    .from("investor_balances")
+    .select(
+      "deposit_grams, profit_grams, withdrawn_grams, total_grams"
+    )
+    .eq("investor_id", investorId)
+    .single();
 
-  // Profits
-  const { data: profits } = await supabase
-    .from("monthly_profits")
-    .select("profit_grams")
-    .eq("investor_id", investorId);
+  if (balanceError || !balance) {
+    return NextResponse.json({
+      investor,
+      balance: {
+        deposit_grams: 0,
+        profit_grams: 0,
+        withdrawn_grams: 0,
+        total_grams: 0,
+        gold_price_18k_usd: null,
+        total_usd: null,
+      },
+    });
+  }
 
-  const profitGrams =
-    profits?.reduce((sum, row) => sum + Number(row.profit_grams), 0) || 0;
-
-  const totalGrams = investmentGrams + profitGrams;
-
-  // Gold price from XAUT
+  // 💲 Gold price
   const goldPrice18k = await fetchGoldPrice18K();
-
   const totalUsd =
     goldPrice18k !== null
-      ? Number((totalGrams * goldPrice18k).toFixed(2))
+      ? Number((balance.total_grams * goldPrice18k).toFixed(2))
       : null;
 
   return NextResponse.json({
     investor,
     balance: {
-      investment_grams: investmentGrams,
-      profit_grams: profitGrams,
-      total_grams: totalGrams,
+      ...balance,
       gold_price_18k_usd: goldPrice18k,
       total_usd: totalUsd,
       price_source: "XAUT (Tether Gold)",
