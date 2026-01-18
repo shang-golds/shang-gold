@@ -9,8 +9,9 @@ type Investor = {
 };
 
 type Balance = {
-  investment_grams: number;
+  deposit_grams: number;
   profit_grams: number;
+  withdrawn_grams: number;
   total_grams: number;
   gold_price_18k_usd: number | null;
   total_usd: number | null;
@@ -125,7 +126,7 @@ export default function DashboardPage() {
         <div style={styles.section}>
           <div style={styles.row}>
             <span>Investment</span>
-            <strong>{balance?.investment_grams ?? 0} g</strong>
+            <strong>{balance?.deposit_grams ?? 0} g</strong>
           </div>
           <div style={styles.row}>
             <span>Profit</span>
