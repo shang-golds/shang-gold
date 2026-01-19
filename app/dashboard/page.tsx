@@ -22,7 +22,6 @@ type Transaction = {
   type: string;
   grams: number | null;
   usd: number | null;
-  note?: string | null;
 };
 
 export default function DashboardPage() {
@@ -34,18 +33,18 @@ export default function DashboardPage() {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
 
-  // Tabs
-  const [tab, setTab] = useState<"overview" | "transactions">("overview");
+  // Bottom navigation tabs
+  const [tab, setTab] = useState<
+    "account" | "transactions" | "profile"
+  >("account");
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(false);
 
   // Load dashboard
   useEffect(() => {
     fetch("/api/dashboard")
-      .then((res) => {
-        if (!res.ok) throw new Error();
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => {
         setInvestor(data.investor);
         setBalance(data.balance);
@@ -54,7 +53,6 @@ export default function DashboardPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  // Load transactions
   const loadTransactions = () => {
     setTxLoading(true);
     fetch("/api/transactions")
@@ -83,7 +81,7 @@ export default function DashboardPage() {
   };
 
   if (loading) {
-    return <p style={{ textAlign: "center", color: "#fff" }}>Loading...</p>;
+    return <p style={{ color: "#fff", textAlign: "center" }}>Loading...</p>;
   }
 
   // 🔐 Login
@@ -126,34 +124,14 @@ export default function DashboardPage() {
       <div style={styles.cardWide}>
         {/* Header */}
         <div style={styles.header}>
-          <Image src="/logo.png" alt="Shang Gold" width={90} height={90} />
+          <Image src="/logo.png" alt="Shang Gold" width={80} height={80} />
           <h1 style={styles.brand}>SHANG GOLD</h1>
           <p style={styles.subtitle}>Gold-Linked Investment Dashboard</p>
         </div>
 
-        {/* Tabs */}
-        <div style={styles.tabs}>
-          <button
-            style={tab === "overview" ? styles.tabActive : styles.tab}
-            onClick={() => setTab("overview")}
-          >
-            Overview
-          </button>
-          <button
-            style={tab === "transactions" ? styles.tabActive : styles.tab}
-            onClick={() => {
-              setTab("transactions");
-              if (transactions.length === 0) loadTransactions();
-            }}
-          >
-            Transactions
-          </button>
-        </div>
-
-        {/* OVERVIEW */}
-        {tab === "overview" && (
+        {/* ACCOUNT */}
+        {tab === "account" && (
           <>
-            {/* Investor Info */}
             <div style={styles.section}>
               <div style={styles.row}>
                 <span>Investor</span>
@@ -169,7 +147,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Balance */}
             <div style={styles.section}>
               <div style={styles.row}>
                 <span>Deposits</span>
@@ -184,22 +161,20 @@ export default function DashboardPage() {
                 <strong>{balance?.withdrawn_grams ?? 0} g</strong>
               </div>
               <div style={styles.highlight}>
-                <span>Total Gold Balance</span>
+                <span>Total Gold</span>
                 <strong>{balance?.total_grams ?? 0} g</strong>
               </div>
             </div>
 
-            {/* USD */}
             <div style={styles.section}>
               <div style={styles.row}>
                 <span>Gold Price (18K)</span>
                 <strong>
                   {balance?.gold_price_18k_usd
                     ? `$${balance.gold_price_18k_usd.toFixed(2)} / g`
-                    : "Loading..."}
+                    : "-"}
                 </strong>
               </div>
-
               <div style={styles.highlightGold}>
                 <span>Total Value</span>
                 <strong>
@@ -214,7 +189,7 @@ export default function DashboardPage() {
 
         {/* TRANSACTIONS */}
         {tab === "transactions" && (
-          <div>
+          <>
             {txLoading ? (
               <p style={{ textAlign: "center" }}>Loading transactions...</p>
             ) : (
@@ -235,35 +210,74 @@ export default function DashboardPage() {
                       </td>
                     </tr>
                   )}
-
                   {transactions.map((tx, i) => (
                     <tr key={i}>
                       <td>{tx.tx_date}</td>
-                      <td style={{ textTransform: "capitalize" }}>{tx.type}</td>
-                      <td align="right">
-                        {tx.grams !== null ? `${tx.grams} g` : "-"}
-                      </td>
-                      <td align="right">
-                        {tx.usd !== null ? `$${tx.usd}` : "-"}
-                      </td>
+                      <td>{tx.type}</td>
+                      <td align="right">{tx.grams ?? "-"}</td>
+                      <td align="right">{tx.usd ? `$${tx.usd}` : "-"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             )}
+          </>
+        )}
+
+        {/* PROFILE */}
+        {tab === "profile" && (
+          <div style={styles.section}>
+            <div style={styles.row}>
+              <span>Full Name</span>
+              <strong>{investor.full_name}</strong>
+            </div>
+            <div style={styles.row}>
+              <span>Investor Number</span>
+              <strong>{investor.investor_number}</strong>
+            </div>
+            <div style={styles.row}>
+              <span>Account Status</span>
+              <strong style={{ color: "green" }}>Active</strong>
+            </div>
           </div>
         )}
 
-        {/* Logout */}
-        <button
-          style={styles.logout}
-          onClick={async () => {
-            await fetch("/api/logout", { method: "POST" });
-            window.location.reload();
-          }}
-        >
-          Logout
-        </button>
+        {/* Bottom Navigation */}
+        <div style={styles.bottomNav}>
+          <button
+            style={tab === "account" ? styles.navActive : styles.navBtn}
+            onClick={() => setTab("account")}
+          >
+            Account
+          </button>
+
+          <button
+            style={tab === "transactions" ? styles.navActive : styles.navBtn}
+            onClick={() => {
+              setTab("transactions");
+              if (transactions.length === 0) loadTransactions();
+            }}
+          >
+            Transactions
+          </button>
+
+          <button
+            style={tab === "profile" ? styles.navActive : styles.navBtn}
+            onClick={() => setTab("profile")}
+          >
+            Profile
+          </button>
+
+          <button
+            style={styles.navBtn}
+            onClick={async () => {
+              await fetch("/api/logout", { method: "POST" });
+              window.location.reload();
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -272,11 +286,11 @@ export default function DashboardPage() {
 // 🎨 Styles
 const styles: any = {
   page: {
-    background: "linear-gradient(135deg, #0f0f0f, #1c1c1c)",
+    background: "#111",
     minHeight: "100vh",
     display: "flex",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
     fontFamily: "Arial",
   },
   card: {
@@ -290,7 +304,7 @@ const styles: any = {
   cardWide: {
     background: "#fff",
     width: 520,
-    padding: 30,
+    padding: 25,
     borderRadius: 14,
     borderTop: "6px solid #d4af37",
   },
@@ -300,39 +314,15 @@ const styles: any = {
   },
   brand: {
     color: "#d4af37",
-    margin: "10px 0 5px",
-    letterSpacing: 1,
   },
   subtitle: {
     fontSize: 13,
     color: "#777",
-    marginBottom: 10,
-  },
-  tabs: {
-    display: "flex",
-    gap: 10,
-    marginBottom: 20,
-  },
-  tab: {
-    flex: 1,
-    padding: 10,
-    background: "#eee",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: "bold",
-  },
-  tabActive: {
-    flex: 1,
-    padding: 10,
-    background: "#d4af37",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: "bold",
   },
   section: {
     marginBottom: 20,
-    paddingBottom: 15,
     borderBottom: "1px solid #eee",
+    paddingBottom: 15,
   },
   row: {
     display: "flex",
@@ -343,20 +333,15 @@ const styles: any = {
     display: "flex",
     justifyContent: "space-between",
     fontWeight: "bold",
-    fontSize: 16,
-    marginTop: 10,
   },
   highlightGold: {
     display: "flex",
     justifyContent: "space-between",
     fontWeight: "bold",
-    fontSize: 18,
-    marginTop: 10,
     color: "#b88900",
   },
   table: {
     width: "100%",
-    fontSize: 14,
     borderCollapse: "collapse",
   },
   input: {
@@ -370,19 +355,28 @@ const styles: any = {
     background: "#d4af37",
     border: "none",
     fontWeight: "bold",
-    cursor: "pointer",
-  },
-  logout: {
-    width: "100%",
-    marginTop: 20,
-    padding: 10,
-    background: "#222",
-    color: "#fff",
-    border: "none",
-    cursor: "pointer",
   },
   error: {
     color: "red",
     marginTop: 10,
+  },
+  bottomNav: {
+    display: "flex",
+    borderTop: "1px solid #ddd",
+    marginTop: 20,
+  },
+  navBtn: {
+    flex: 1,
+    padding: 12,
+    background: "#fff",
+    border: "none",
+    fontWeight: "bold",
+  },
+  navActive: {
+    flex: 1,
+    padding: 12,
+    background: "#d4af37",
+    border: "none",
+    fontWeight: "bold",
   },
 };
