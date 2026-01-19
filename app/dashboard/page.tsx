@@ -41,7 +41,6 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(false);
 
-  // Load dashboard
   useEffect(() => {
     fetch("/api/dashboard")
       .then((res) => res.json())
@@ -118,13 +117,12 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ Dashboard
   return (
     <div style={styles.page}>
       <div style={styles.cardWide}>
         {/* Header */}
         <div style={styles.header}>
-          <Image src="/logo.png" alt="Shang Gold" width={80} height={80} />
+          <Image src="/logo.png" alt="Shang Gold" width={70} height={70} />
           <h1 style={styles.brand}>SHANG GOLD</h1>
           <p style={styles.subtitle}>Gold-Linked Investment Dashboard</p>
         </div>
@@ -165,25 +163,6 @@ export default function DashboardPage() {
                 <strong>{balance?.total_grams ?? 0} g</strong>
               </div>
             </div>
-
-            <div style={styles.section}>
-              <div style={styles.row}>
-                <span>Gold Price (18K)</span>
-                <strong>
-                  {balance?.gold_price_18k_usd
-                    ? `$${balance.gold_price_18k_usd.toFixed(2)} / g`
-                    : "-"}
-                </strong>
-              </div>
-              <div style={styles.highlightGold}>
-                <span>Total Value</span>
-                <strong>
-                  {balance?.total_usd
-                    ? `$${balance.total_usd.toFixed(2)}`
-                    : "$0.00"}
-                </strong>
-              </div>
-            </div>
           </>
         )}
 
@@ -196,10 +175,10 @@ export default function DashboardPage() {
               <table style={styles.table}>
                 <thead>
                   <tr>
-                    <th align="left">Date</th>
-                    <th align="left">Type</th>
-                    <th align="right">Gold (g)</th>
-                    <th align="right">USD</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Gold</th>
+                    <th>USD</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -214,8 +193,8 @@ export default function DashboardPage() {
                     <tr key={i}>
                       <td>{tx.tx_date}</td>
                       <td>{tx.type}</td>
-                      <td align="right">{tx.grams ?? "-"}</td>
-                      <td align="right">{tx.usd ? `$${tx.usd}` : "-"}</td>
+                      <td>{tx.grams ?? "-"}</td>
+                      <td>{tx.usd ? `$${tx.usd}` : "-"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -228,16 +207,12 @@ export default function DashboardPage() {
         {tab === "profile" && (
           <div style={styles.section}>
             <div style={styles.row}>
-              <span>Full Name</span>
+              <span>Name</span>
               <strong>{investor.full_name}</strong>
             </div>
             <div style={styles.row}>
-              <span>Investor Number</span>
+              <span>Investor #</span>
               <strong>{investor.investor_number}</strong>
-            </div>
-            <div style={styles.row}>
-              <span>Account Status</span>
-              <strong style={{ color: "green" }}>Active</strong>
             </div>
           </div>
         )}
@@ -248,7 +223,7 @@ export default function DashboardPage() {
             style={tab === "account" ? styles.navActive : styles.navBtn}
             onClick={() => setTab("account")}
           >
-            Account
+            🏦<br />Account
           </button>
 
           <button
@@ -258,14 +233,14 @@ export default function DashboardPage() {
               if (transactions.length === 0) loadTransactions();
             }}
           >
-            Transactions
+            📄<br />Transactions
           </button>
 
           <button
             style={tab === "profile" ? styles.navActive : styles.navBtn}
             onClick={() => setTab("profile")}
           >
-            Profile
+            👤<br />Profile
           </button>
 
           <button
@@ -275,7 +250,7 @@ export default function DashboardPage() {
               window.location.reload();
             }}
           >
-            Logout
+            🚪<br />Logout
           </button>
         </div>
       </div>
@@ -290,7 +265,8 @@ const styles: any = {
     minHeight: "100vh",
     display: "flex",
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "flex-start",
+    paddingBottom: 80, // مساحة للشريط السفلي
     fontFamily: "Arial",
   },
   card: {
@@ -334,12 +310,6 @@ const styles: any = {
     justifyContent: "space-between",
     fontWeight: "bold",
   },
-  highlightGold: {
-    display: "flex",
-    justifyContent: "space-between",
-    fontWeight: "bold",
-    color: "#b88900",
-  },
   table: {
     width: "100%",
     borderCollapse: "collapse",
@@ -361,22 +331,28 @@ const styles: any = {
     marginTop: 10,
   },
   bottomNav: {
+    position: "fixed",
+    bottom: 0,
+    left: 0,
+    width: "100%",
     display: "flex",
     borderTop: "1px solid #ddd",
-    marginTop: 20,
+    background: "#fff",
   },
   navBtn: {
     flex: 1,
-    padding: 12,
-    background: "#fff",
+    padding: 10,
     border: "none",
+    background: "#fff",
     fontWeight: "bold",
+    fontSize: 12,
   },
   navActive: {
     flex: 1,
-    padding: 12,
-    background: "#d4af37",
+    padding: 10,
     border: "none",
+    background: "#d4af37",
     fontWeight: "bold",
+    fontSize: 12,
   },
 };
