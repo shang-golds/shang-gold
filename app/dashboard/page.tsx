@@ -300,6 +300,7 @@ const styles: any = {
     borderRadius: 12,
     textAlign: "center",
     borderTop: "6px solid #d4af37",
+    color: "#222", // 👈 أضف هذا السطر
   },
   cardWide: {
     background: "#fff",
@@ -307,6 +308,7 @@ const styles: any = {
     padding: 25,
     borderRadius: 14,
     borderTop: "6px solid #d4af37",
+    color: "#222", // 👈 أضف هذا السطر
   },
   header: {
     textAlign: "center",
