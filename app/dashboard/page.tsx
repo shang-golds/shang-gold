@@ -81,7 +81,7 @@ export default function DashboardPage() {
   };
 
   if (loading) {
-    return <p style={{ color: "#fff", textAlign: "center" }}>Loading...</p>;
+    return <p style={{ color: "#4B4B4B", textAlign: "center" }}>Loading...</p>;
   }
 
   // 🔐 Login
