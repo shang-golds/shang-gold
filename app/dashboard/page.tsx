@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [investorNumber, setInvestorNumber] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Bottom navigation tabs
   const [tab, setTab] = useState<
@@ -66,18 +67,30 @@ export default function DashboardPage() {
 
   const login = async () => {
     setError("");
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        investor_number: investorNumber,
-        pin,
-      }),
-    });
+    if (!investorNumber || !pin) {
+      setError("Please enter both your investor number and PIN.");
+      return;
+    }
 
-    const data = await res.json();
-    if (data.success) window.location.reload();
-    else setError("Invalid investor number or PIN");
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          investor_number: investorNumber,
+          pin,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) window.location.reload();
+      else setError("Invalid investor number or PIN");
+    } catch {
+      setError("Login failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -93,23 +106,47 @@ export default function DashboardPage() {
           <h2 style={styles.brand}>SHANG GOLD</h2>
           <p style={styles.subtitle}>Gold-Linked Investment Dashboard</p>
 
-          <input
-            style={styles.input}
-            placeholder="Investor Number"
-            value={investorNumber}
-            onChange={(e) => setInvestorNumber(e.target.value)}
-          />
+          <div style={styles.inputGroup}>
+            <label style={styles.label} htmlFor="investor-number">
+              Investor Number
+            </label>
+            <input
+              id="investor-number"
+              style={styles.input}
+              placeholder="e.g., 102938"
+              value={investorNumber}
+              onChange={(e) => setInvestorNumber(e.target.value)}
+              autoComplete="username"
+              inputMode="numeric"
+            />
+          </div>
 
-          <input
-            style={styles.input}
-            type="password"
-            placeholder="PIN"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-          />
+          <div style={styles.inputGroup}>
+            <label style={styles.label} htmlFor="pin">
+              PIN
+            </label>
+            <input
+              id="pin"
+              style={styles.input}
+              type="password"
+              placeholder="Enter 4-digit PIN"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              autoComplete="current-password"
+              inputMode="numeric"
+            />
+            <p style={styles.inputHint}>Never share your PIN with anyone.</p>
+          </div>
 
-          <button style={styles.primaryButton} onClick={login}>
-            Login
+          <button
+            style={{
+              ...styles.primaryButton,
+              ...(isSubmitting ? styles.primaryButtonDisabled : {}),
+            }}
+            onClick={login}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing in..." : "Login"}
           </button>
 
           {error && <p style={styles.error}>{error}</p>}
@@ -291,12 +328,14 @@ const styles: any = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    padding: 24,
     fontFamily: "Arial",
   },
   card: {
     background: "#fff",
-    width: 360,
-    padding: 25,
+    width: "100%",
+    maxWidth: 360,
+    padding: 24,
     borderRadius: 12,
     textAlign: "center",
     borderTop: "6px solid #d4af37",
@@ -304,8 +343,9 @@ const styles: any = {
   },
   cardWide: {
     background: "#fff",
-    width: 520,
-    padding: 25,
+    width: "100%",
+    maxWidth: 520,
+    padding: 24,
     borderRadius: 14,
     borderTop: "6px solid #d4af37",
     color: "#222", // 👈 أضف هذا السطر
@@ -349,7 +389,24 @@ const styles: any = {
   input: {
     width: "100%",
     padding: 10,
-    marginBottom: 10,
+    borderRadius: 6,
+    border: "1px solid #ccc",
+  },
+  inputGroup: {
+    textAlign: "left",
+    marginBottom: 14,
+  },
+  label: {
+    display: "block",
+    fontSize: 12,
+    fontWeight: "bold",
+    marginBottom: 6,
+    color: "#444",
+  },
+  inputHint: {
+    marginTop: 6,
+    fontSize: 11,
+    color: "#777",
   },
   primaryButton: {
     width: "100%",
@@ -357,6 +414,12 @@ const styles: any = {
     background: "#d4af37",
     border: "none",
     fontWeight: "bold",
+    borderRadius: 6,
+    cursor: "pointer",
+  },
+  primaryButtonDisabled: {
+    opacity: 0.7,
+    cursor: "not-allowed",
   },
   error: {
     color: "red",
