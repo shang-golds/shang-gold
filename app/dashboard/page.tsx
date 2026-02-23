@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import { LoadingScreen } from "@/components/dashboard/loading-screen";
+import { LoginForm } from "@/components/dashboard/login-form";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { BalanceChart } from "@/components/dashboard/balance-chart";
+import { TransactionsTable } from "@/components/dashboard/transactions-table";
+import { ProfileSection } from "@/components/dashboard/profile-section";
+import { BottomNav } from "@/components/dashboard/bottom-nav";
 
 type Investor = {
   full_name: string;
@@ -80,305 +87,184 @@ export default function DashboardPage() {
     else setError("Invalid investor number or PIN");
   };
 
+  // Loading state
   if (loading) {
-    return <p style={{ color: "#4B4B4B", textAlign: "center" }}>Loading...</p>;
+    return <LoadingScreen />;
   }
 
-  // 🔐 Login
+  // Login screen
   if (!investor) {
     return (
-      <div style={styles.page}>
-        <div style={styles.card}>
-          <Image src="/logo.png" alt="Shang Gold" width={120} height={120} />
-          <h2 style={styles.brand}>SHANG GOLD</h2>
-          <p style={styles.subtitle}>Gold-Linked Investment Dashboard</p>
-
-          <input
-            style={styles.input}
-            placeholder="Investor Number"
-            value={investorNumber}
-            onChange={(e) => setInvestorNumber(e.target.value)}
-          />
-
-          <input
-            style={styles.input}
-            type="password"
-            placeholder="PIN"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-          />
-
-          <button style={styles.primaryButton} onClick={login}>
-            Login
-          </button>
-
-          {error && <p style={styles.error}>{error}</p>}
-        </div>
-      </div>
+      <LoginForm
+        investorNumber={investorNumber}
+        pin={pin}
+        error={error}
+        onInvestorNumberChange={setInvestorNumber}
+        onPinChange={setPin}
+        onLogin={login}
+      />
     );
   }
 
-  // ✅ Dashboard
+  // Dashboard
   return (
-    <div style={styles.page}>
-      <div style={styles.cardWide}>
-        {/* Header */}
-        <div style={styles.header}>
-          <Image src="/logo.png" alt="Shang Gold" width={80} height={80} />
-          <h1 style={styles.brand}>SHANG GOLD</h1>
-          <p style={styles.subtitle}>Gold-Linked Investment Dashboard</p>
-        </div>
+    <div className="min-h-screen bg-background">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,175,55,0.04)_0%,_transparent_60%)]" />
 
-        {/* ACCOUNT */}
+      <DashboardHeader investorName={investor.full_name} />
+
+      <div className="relative mx-auto max-w-2xl px-4 py-6">
+        {/* ACCOUNT TAB */}
         {tab === "account" && (
-          <>
-            <div style={styles.section}>
-              <div style={styles.row}>
-                <span>Investor</span>
-                <strong>{investor.full_name}</strong>
+          <div className="flex flex-col gap-5">
+            {/* Investor Info Card */}
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              <div className="flex items-center justify-between border-b border-border px-5 py-3">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Investor Details
+                </h2>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                  <span className="h-1 w-1 rounded-full bg-emerald-400" />
+                  Active
+                </span>
               </div>
-              <div style={styles.row}>
-                <span>Investor #</span>
-                <strong>{investor.investor_number}</strong>
+              <div className="flex items-center justify-between px-5 py-3 text-sm">
+                <span className="text-muted-foreground">Investor</span>
+                <span className="font-medium text-foreground">{investor.full_name}</span>
               </div>
-              <div style={styles.row}>
-                <span>Status</span>
-                <strong style={{ color: "green" }}>Active</strong>
-              </div>
-            </div>
-
-            <div style={styles.section}>
-              <div style={styles.row}>
-                <span>Deposits</span>
-                <strong>{balance?.deposit_grams ?? 0} g</strong>
-              </div>
-              <div style={styles.row}>
-                <span>Profit</span>
-                <strong>{balance?.profit_grams ?? 0} g</strong>
-              </div>
-              <div style={styles.row}>
-                <span>Withdrawn</span>
-                <strong>{balance?.withdrawn_grams ?? 0} g</strong>
-              </div>
-              <div style={styles.highlight}>
-                <span>Total Gold</span>
-                <strong>{balance?.total_grams ?? 0} g</strong>
+              <div className="flex items-center justify-between border-t border-border/50 px-5 py-3 text-sm">
+                <span className="text-muted-foreground">Investor #</span>
+                <span className="font-mono font-medium text-gold-400">
+                  {investor.investor_number}
+                </span>
               </div>
             </div>
 
-            <div style={styles.section}>
-              <div style={styles.row}>
-                <span>Gold Price (18K)</span>
-                <strong>
+            {/* Stat Cards Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <StatCard
+                label="Deposits"
+                value={`${balance?.deposit_grams ?? 0} g`}
+                icon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <polyline points="19 12 12 19 5 12" />
+                  </svg>
+                }
+              />
+              <StatCard
+                label="Profit"
+                value={`${balance?.profit_grams ?? 0} g`}
+                icon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                    <polyline points="17 6 23 6 23 12" />
+                  </svg>
+                }
+              />
+              <StatCard
+                label="Withdrawn"
+                value={`${balance?.withdrawn_grams ?? 0} g`}
+                icon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5" />
+                    <polyline points="5 12 12 5 19 12" />
+                  </svg>
+                }
+              />
+              <StatCard
+                label="Total Gold"
+                value={`${balance?.total_grams ?? 0} g`}
+                highlight
+                icon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                }
+              />
+            </div>
+
+            {/* Balance Chart */}
+            <BalanceChart
+              deposits={balance?.deposit_grams ?? 0}
+              profit={balance?.profit_grams ?? 0}
+              withdrawn={balance?.withdrawn_grams ?? 0}
+              total={balance?.total_grams ?? 0}
+            />
+
+            {/* Valuation Card */}
+            <div className="overflow-hidden rounded-xl border border-gold-400/20 bg-gradient-to-br from-gold-400/5 via-card to-card">
+              <div className="px-5 py-3">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Current Valuation
+                </h2>
+              </div>
+              <div className="flex items-center justify-between border-t border-border/50 px-5 py-3 text-sm">
+                <span className="text-muted-foreground">Gold Price (18K)</span>
+                <span className="font-medium text-foreground">
                   {balance?.gold_price_18k_usd
                     ? `$${balance.gold_price_18k_usd.toFixed(2)} / g`
                     : "-"}
-                </strong>
+                </span>
               </div>
-              <div style={styles.highlightGold}>
-                <span>Total Value</span>
-                <strong>
-                  {balance?.total_usd
-                    ? `$${balance.total_usd.toFixed(2)}`
-                    : "$0.00"}
-                </strong>
+              <div className="border-t border-border/50 bg-gold-400/5 px-5 py-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    Total Value
+                  </span>
+                  <span className="text-2xl font-bold text-gold-400">
+                    {balance?.total_usd
+                      ? `$${balance.total_usd.toFixed(2)}`
+                      : "$0.00"}
+                  </span>
+                </div>
               </div>
-            </div>
-          </>
-        )}
-
-        {/* TRANSACTIONS */}
-        {tab === "transactions" && (
-          <>
-            {txLoading ? (
-              <p style={{ textAlign: "center" }}>Loading transactions...</p>
-            ) : (
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th align="left">Date</th>
-                    <th align="left">Type</th>
-                    <th align="right">Gold (g)</th>
-                    <th align="right">USD</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.length === 0 && (
-                    <tr>
-                      <td colSpan={4} style={{ textAlign: "center", padding: 15 }}>
-                        No transactions found
-                      </td>
-                    </tr>
-                  )}
-                  {transactions.map((tx, i) => (
-                    <tr key={i}>
-                      <td>{tx.tx_date}</td>
-                      <td>{tx.type}</td>
-                      <td align="right">{tx.grams ?? "-"}</td>
-                      <td align="right">{tx.usd ? `$${tx.usd}` : "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </>
-        )}
-
-        {/* PROFILE */}
-        {tab === "profile" && (
-          <div style={styles.section}>
-            <div style={styles.row}>
-              <span>Full Name</span>
-              <strong>{investor.full_name}</strong>
-            </div>
-            <div style={styles.row}>
-              <span>Investor Number</span>
-              <strong>{investor.investor_number}</strong>
-            </div>
-            <div style={styles.row}>
-              <span>Account Status</span>
-              <strong style={{ color: "green" }}>Active</strong>
             </div>
           </div>
         )}
 
-        {/* Bottom Navigation */}
-        <div style={styles.bottomNav}>
-          <button
-            style={tab === "account" ? styles.navActive : styles.navBtn}
-            onClick={() => setTab("account")}
-          >
-            Account
-          </button>
+        {/* TRANSACTIONS TAB */}
+        {tab === "transactions" && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Transaction History
+              </h2>
+              <span className="text-xs text-muted-foreground">
+                {transactions.length} records
+              </span>
+            </div>
+            <TransactionsTable
+              transactions={transactions}
+              loading={txLoading}
+            />
+          </div>
+        )}
 
-          <button
-            style={tab === "transactions" ? styles.navActive : styles.navBtn}
-            onClick={() => {
-              setTab("transactions");
-              if (transactions.length === 0) loadTransactions();
-            }}
-          >
-            Transactions
-          </button>
-
-          <button
-            style={tab === "profile" ? styles.navActive : styles.navBtn}
-            onClick={() => setTab("profile")}
-          >
-            Profile
-          </button>
-
-          <button
-            style={styles.navBtn}
-            onClick={async () => {
-              await fetch("/api/logout", { method: "POST" });
-              window.location.reload();
-            }}
-          >
-            Logout
-          </button>
-        </div>
+        {/* PROFILE TAB */}
+        {tab === "profile" && (
+          <ProfileSection
+            fullName={investor.full_name}
+            investorNumber={investor.investor_number}
+          />
+        )}
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav
+        activeTab={tab}
+        onTabChange={(newTab) => {
+          setTab(newTab);
+          if (newTab === "transactions" && transactions.length === 0) {
+            loadTransactions();
+          }
+        }}
+        onLogout={async () => {
+          await fetch("/api/logout", { method: "POST" });
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }
-
-// 🎨 Styles
-const styles: any = {
-  page: {
-    background: "#111",
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontFamily: "Arial",
-  },
-  card: {
-    background: "#fff",
-    width: 360,
-    padding: 25,
-    borderRadius: 12,
-    textAlign: "center",
-    borderTop: "6px solid #d4af37",
-    color: "#222", // 👈 أضف هذا السطر
-  },
-  cardWide: {
-    background: "#fff",
-    width: 520,
-    padding: 25,
-    borderRadius: 14,
-    borderTop: "6px solid #d4af37",
-    color: "#222", // 👈 أضف هذا السطر
-  },
-  header: {
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  brand: {
-    color: "#d4af37",
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#777",
-  },
-  section: {
-    marginBottom: 20,
-    borderBottom: "1px solid #eee",
-    paddingBottom: 15,
-  },
-  row: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  highlight: {
-    display: "flex",
-    justifyContent: "space-between",
-    fontWeight: "bold",
-  },
-  highlightGold: {
-    display: "flex",
-    justifyContent: "space-between",
-    fontWeight: "bold",
-    color: "#b88900",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-  input: {
-    width: "100%",
-    padding: 10,
-    marginBottom: 10,
-  },
-  primaryButton: {
-    width: "100%",
-    padding: 10,
-    background: "#d4af37",
-    border: "none",
-    fontWeight: "bold",
-  },
-  error: {
-    color: "red",
-    marginTop: 10,
-  },
-  bottomNav: {
-    display: "flex",
-    borderTop: "1px solid #ddd",
-    marginTop: 20,
-  },
-  navBtn: {
-    flex: 1,
-    padding: 12,
-    background: "#fff",
-    border: "none",
-    fontWeight: "bold",
-  },
-  navActive: {
-    flex: 1,
-    padding: 12,
-    background: "#d4af37",
-    border: "none",
-    fontWeight: "bold",
-  },
-};
